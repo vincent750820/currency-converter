@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Currency Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .flip-animation {
+            animation: flip 0.5s ease;
+        }
+        @keyframes flip {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+            100% { transform: rotateY(0deg); }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl overflow-hidden card-shadow">
+        <div class="p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">Currency Converter</h1>
+                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <i class="fas fa-exchange-alt text-purple-600"></i>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                <div class="relative rounded-md shadow-sm">
+                    <input type="number" id="amount" class="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="0.00" value="100">
+                    <div class="absolute inset-y-0 right-0 flex items-center">
+                        <select id="fromCurrency" class="h-full py-0 pl-2 pr-7 border-transparent bg-transparent text-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 rounded-r-lg">
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="AUD">AUD</option>
+                            <option value="CAD">CAD</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mb-6">
+                <button id="swapCurrencies" class="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-colors duration-200">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <label for="convertedAmount" class="block text-sm font-medium text-gray-700 mb-2">Converted Amount</label>
+                <div class="relative rounded-md shadow-sm">
+                    <input type="number" id="convertedAmount" class="block w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="0.00" readonly>
+                    <div class="absolute inset-y-0 right-0 flex items-center">
+                        <select id="toCurrency" class="h-full py-0 pl-2 pr-7 border-transparent bg-transparent text-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 rounded-r-lg">
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="JPY">JPY</option>
+                            <option value="AUD">AUD</option>
+                            <option value="CAD">CAD</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-purple-50 rounded-lg p-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-700">Exchange Rate</span>
+                    <span id="exchangeRate" class="text-lg font-bold text-purple-600">1 USD = 0.85 EUR</span>
+                </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    <span id="lastUpdated">Rates updated: Just now</span>
+                </div>
+            </div>
+            
+            <button id="convertBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                Convert Currency
+            </button>
+        </div>
+        
+        <div class="bg-gray-50 px-8 py-4">
+            <div class="flex justify-between text-xs text-gray-500">
+                <span>Powered by CurrencyAPI</span>
+                <span id="currentDate"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock exchange rates (in a real app, you'd fetch these from an API)
+        const exchangeRates = {
+            USD: { EUR: 0.85, GBP: 0.73, JPY: 110.25, AUD: 1.29, CAD: 1.25 },
+            EUR: { USD: 1.18, GBP: 0.86, JPY: 129.75, AUD: 1.52, CAD: 1.47 },
+            GBP: { USD: 1.37, EUR: 1.16, JPY: 151.25, AUD: 1.77, CAD: 1.71 },
+            JPY: { USD: 0.0091, EUR: 0.0077, GBP: 0.0066, AUD: 0.0117, CAD: 0.0113 },
+            AUD: { USD: 0.78, EUR: 0.66, GBP: 0.57, JPY: 85.47, CAD: 0.97 },
+            CAD: { USD: 0.80, EUR: 0.68, GBP: 0.58, JPY: 88.52, AUD: 1.03 }
+        };
+
+        // Format date
+        const now = new Date();
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+
+        // Format number with commas
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // Convert currency
+        function convertCurrency() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const fromCurrency = document.getElementById('fromCurrency').value;
+            const toCurrency = document.getElementById('toCurrency').value;
+            
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            let convertedAmount;
+            if (fromCurrency === toCurrency) {
+                convertedAmount = amount;
+            } else {
+                const rate = exchangeRates[fromCurrency][toCurrency];
+                convertedAmount = amount * rate;
+                document.getElementById('exchangeRate').textContent = `1 ${fromCurrency} = ${rate.toFixed(4)} ${toCurrency}`;
+            }
+            
+            document.getElementById('convertedAmount').value = convertedAmount.toFixed(2);
+            document.getElementById('lastUpdated').textContent = `Rates updated: ${now.toLocaleTimeString()}`;
+            
+            // Add animation
+            document.getElementById('convertedAmount').classList.add('flip-animation');
+            setTimeout(() => {
+                document.getElementById('convertedAmount').classList.remove('flip-animation');
+            }, 500);
+        }
+
+        // Swap currencies
+        document.getElementById('swapCurrencies').addEventListener('click', function() {
+            const fromCurrency = document.getElementById('fromCurrency');
+            const toCurrency = document.getElementById('toCurrency');
+            const temp = fromCurrency.value;
+            fromCurrency.value = toCurrency.value;
+            toCurrency.value = temp;
+            convertCurrency();
+        });
+
+        // Initial conversion on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            convertCurrency();
+        });
+
+        // Convert on button click
+        document.getElementById('convertBtn').addEventListener('click', convertCurrency);
+
+        // Convert when any input changes
+        document.getElementById('amount').addEventListener('input', convertCurrency);
+        document.getElementById('fromCurrency').addEventListener('change', convertCurrency);
+        document.getElementById('toCurrency').addEventListener('change', convertCurrency);
+    </script>
+</body>
+</html>
